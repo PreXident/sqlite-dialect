@@ -21,15 +21,22 @@ import org.hibernate.dialect.function.StandardSQLFunction;
 import org.hibernate.dialect.function.VarArgsSQLFunction;
 import org.hibernate.dialect.pagination.AbstractLimitHandler;
 import org.hibernate.dialect.pagination.LimitHandler;
+import org.hibernate.dialect.unique.DefaultUniqueDelegate;
+import org.hibernate.dialect.unique.UniqueDelegate;
 import org.hibernate.engine.spi.RowSelection;
 import org.hibernate.exception.*;
 import org.hibernate.internal.util.JdbcExceptionHelper;
 import org.hibernate.exception.spi.SQLExceptionConversionDelegate;
 import org.hibernate.exception.spi.TemplatedViolatedConstraintNameExtracter;
 import org.hibernate.exception.spi.ViolatedConstraintNameExtracter;
+import org.hibernate.metamodel.relational.Column;
 import org.hibernate.type.StandardBasicTypes;
 
 public class SQLiteDialect extends Dialect {
+
+  /** Unique delegate with support of unique keyword. */
+  protected UniqueDelegate uniqueDelegate;
+
   public SQLiteDialect() {
     registerColumnType(Types.BIT, "boolean");
     registerColumnType(Types.TINYINT, "tinyint");
@@ -89,6 +96,23 @@ public class SQLiteDialect extends Dialect {
           return new SQLFunctionTemplate(StandardBasicTypes.STRING, "rtrim(?1, ?2)");
         }
     } );
+
+    uniqueDelegate = new DefaultUniqueDelegate(this) {
+        @Override
+        public String getColumnDefinitionUniquenessFragment(org.hibernate.mapping.Column column) {
+          return " unique";
+        }
+
+        @Override
+        public String getColumnDefinitionUniquenessFragment(Column column) {
+          return " unique";
+        }
+    };
+  }
+
+  @Override
+  public UniqueDelegate getUniqueDelegate() {
+    return uniqueDelegate;
   }
 
   @Override
